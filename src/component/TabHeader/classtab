@@ -1,0 +1,125 @@
+import { Tabs } from 'antd';
+import React, { Component } from 'react';
+import { Layout } from 'antd';
+import { useRoutes, useNavigate } from 'react-router-dom';
+import routes from '../../routes/routes';
+import PubSub from 'pubsub-js';
+import './index.css'
+const {TabPane} = Tabs
+const { Header } = Layout;
+const defaultPanes = [{
+    // label: `Tab ${id}`,
+    label: '主页',
+    // children: `Content of Tab Pane ${index + 1}`,
+    path: '/home',
+    key: '1',
+    closable: false,
+}]
+
+
+
+
+class TabHeader extends Component() {
+    state = {
+        items: [{
+            // label: `Tab ${id}`,
+            label: '主页',
+            // children: `Content of Tab Pane ${index + 1}`,
+            path: '/home',
+            key: '1',
+            closable: false,
+        }],
+        activeKey: '1',
+        routePath: '/home',
+    }
+
+    // const navigate = useNavigate()
+    // const [activeKey, setActiveKey] = useState(defaultPanes[0].key);
+    // const [items, setItems] = useState(defaultPanes);
+    // // 路由链接的状态，默认是Home
+    // const [routePath, setRoutePath] = useState([defaultPanes[0].path]);
+
+    // const newTabIndex = useRef(0);
+    // const onChange = (key) => {
+    //     setActiveKey(key);
+    // };
+
+    componentDidMount(){
+        const topic = PubSub.subscribe('data', (_, newData) => {
+            const newActiveKey = `newTab${this.state.activeKey++}`;
+            console.log("newData",newData)
+            this.setState({
+                items: [...this.state.items, {...newData, key: newActiveKey}],
+                routePath: [...this.routePath, newData.path]
+            })
+        })
+    }
+    componentUnmount(){
+        // 取消发布
+        PubSub.unsubscribe(this.topic)
+    }
+    
+    // 组件加载完成，将消息发布过来
+    // 增加Tab标签的事件，应该是点击某一项，这一项的内容作为新标签
+     add = (data) => {
+        const newActiveKey = `newTab${this.state.activeKey++}`;
+        // const newActiveKey = data
+        
+        this.setState({item:[
+        ...this.state.items,
+        {...data, key: newActiveKey},
+        // {
+        //     label: data,
+        //     // children: 'New Tab Pane',
+        //     key: newActiveKey,
+        // },
+        ]});
+        this.setState({ActiveKey: newActiveKey});
+    };
+    // 删除tab标签
+    remove = (targetKey) => {
+        const targetIndex = this.state.items.findIndex((pane) => pane.key === targetKey);
+        const newPanes = this.state.items.filter((pane) => pane.key !== targetKey);
+        if (newPanes.length && targetKey === this.state.activeKey) {
+        const { key } = newPanes[targetIndex === newPanes.length ? targetIndex - 1 : targetIndex];
+        this.setState({ActiveKey: key});
+        }
+        this.setState({items: newPanes})
+    };
+    onEdit = (targetKey, action) => {
+        if (action === 'add') {
+            this.add();
+        } else {
+            this.remove(targetKey);
+        }
+    };
+    handleTabClick = (target) => {
+        // 点击tab标签，如果路由链接='./home'，就显示主页的内容
+        // 根据路由链接显示相应的内容
+        // 根据targetKey找到所在的路由，或者将key直接设置为路径？
+        console.log("hhhhh", target)
+        console.log('jjj', this.state.items)
+
+    }
+    render(){
+        // const element = useRoutes(routes)
+        return (
+        <Header className='headerStyle'>
+            <Tabs
+                // hideAdd
+                onChange={this.onChange}
+                activeKey={this.activeKey}
+                type="editable-card"
+                onEdit={this.onEdit}
+                onTabClick={this.handleTabClick} // 点击tab标签触发的事件
+                items={this.state.items}
+            />
+            <TabPane>
+                {/* {element} */}
+                111
+            </TabPane>
+        </Header>
+    );
+}
+};
+export default TabHeader;
